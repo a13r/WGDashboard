@@ -2166,8 +2166,6 @@ def API_addPeers(configName):
             if len(endpoint_allowed_ip) == 0:
                 endpoint_allowed_ip = DashboardConfig.GetConfig("Peers", "peer_endpoint_allowed_ip")[1]
             config = WireguardConfigurations.get(configName)
-            if not bulkAdd and (len(public_key) == 0 or len(allowed_ips) == 0):
-                return ResponseObject(False, "Please provide at least public_key and allowed_ips")
             if not config.getStatus():
                 config.toggleConfiguration()
             availableIps = _getWireguardConfigurationAvailableIP(configName)
@@ -2206,10 +2204,19 @@ def API_addPeers(configName):
                     return ResponseObject(False, f"This peer already exist")
                 name = data.get("name", "")
                 private_key = data.get("private_key", "")
+
+                # generate a private key if none provided
+                if not private_key:
+                    private_key = _generatePrivateKey()[1]
+                    public_key = _generatePublicKey(private_key)[1]
     
                 for i in allowed_ips:
                     if i not in availableIps[1]:
                         return ResponseObject(False, f"This IP is not available: {i}")
+                
+                # if no client IP is supplied, use the first available
+                if not allowed_ips:
+                    allowed_ips = [availableIps[1][0]]
     
                 status = config.addPeers([
                     {
