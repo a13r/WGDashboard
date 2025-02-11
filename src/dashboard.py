@@ -781,9 +781,9 @@ class WireguardConfiguration:
             print(str(e))
             return False
         
-    def searchPeer(self, publicKey):
+    def searchPeer(self, id=None, name=None):
         for i in self.Peers:
-            if i.id == publicKey:
+            if i.id == id or i.name == name:
                 return True, i
         return False, None
 
@@ -2244,8 +2244,8 @@ def API_downloadPeer(configName):
     if configName not in WireguardConfigurations.keys():
         return ResponseObject(False, "Configuration does not exist")
     configuration = WireguardConfigurations[configName]
-    peerFound, peer = configuration.searchPeer(data['id'])
-    if len(data['id']) == 0 or not peerFound:
+    peerFound, peer = configuration.searchPeer(**data)
+    if not peerFound:
         return ResponseObject(False, "Peer does not exist")
     return ResponseObject(data=peer.downloadPeer())
 
